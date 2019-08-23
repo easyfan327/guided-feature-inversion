@@ -137,15 +137,15 @@ def invert(image, network, layer, epochs, cuda, target_label):
     y = np.argsort(target.cpu().data.numpy())
     category_highest = y[0][-1]
     category = y[0][-target_label]
-    print "Category with highest probability", category
-    print class_names[category], target.cpu().data.numpy()[0][category]
+    print("Category with highest probability {}".format(category))
+    print("{}, {}".format(class_names[category], target.cpu().data.numpy()[0][category]))
     target_logits = logits[0][category_highest]
 
 
     # add detach, so that we will not calculate gradient for this activation value
     ref_acts = get_acts(model, input_var).detach()
     ref_acts_size = ref_acts.size()[1]
-    print "The size of the targeted intermediate layer:", ref_acts.size()
+    print("The size of the targeted intermediate layer: {}".format(ref_acts.size()))
 
 
     w_init = torch.div(torch.ones(1, ref_acts_size), 10)
@@ -158,8 +158,7 @@ def invert(image, network, layer, epochs, cuda, target_label):
         for j in range(ref_acts_size - 1):
             upsampled_mask += w[0, j] * ref_acts[0, j, :, :]
 
-        upsampled_mask.data.unsqueeze_(0)
-        upsampled_mask.data.unsqueeze_(0)
+        upsampled_mask = upsampled_mask.unsqueeze(0).unsqueeze(0)
         upsampled_mask = upsample(upsampled_mask)
 
         # using normalization lead to better result
@@ -190,7 +189,7 @@ def invert(image, network, layer, epochs, cuda, target_label):
             tot_loss = logits_highlight + 1 * logits_supress + 2 * norm_term
         # the result is a list, contains batch_size values, since the batch size is 1, we need [0]
         if (i+1) % 1 == 0:
-            print('Epoch %d: \tTot Loss: %f' % (i+1, tot_loss.data.cpu().numpy()[0]))
+            print('Epoch {}: \tTot Loss: {}'.format(i+1, tot_loss))
 
         # zero gradients, perform a back propogation pass, and update the gradients
         optimizer.zero_grad()
@@ -205,8 +204,7 @@ def invert(image, network, layer, epochs, cuda, target_label):
     upsampled_mask = w[0, ref_acts_size - 1] * ref_acts[0, ref_acts_size - 1, :, :]
     for j in range(ref_acts_size - 1):
         upsampled_mask += w[0, j] * ref_acts[0, j, :, :]
-    upsampled_mask.data.unsqueeze_(0)
-    upsampled_mask.data.unsqueeze_(0)
+    upsampled_mask = upsampled_mask.unsqueeze(0).unsqueeze(0)
     upsampled_mask = upsample(upsampled_mask)
     mask_copy = upsampled_mask.cpu().data.numpy()[0,0]
     saveMask(upsampled_mask)
